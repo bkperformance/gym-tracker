@@ -342,7 +342,7 @@ function rWorkoutList(){
     <div class="stack">
     ${ex.length ? ex.map(e=>`
       <button class="card ex ${S.done[e.id]?'done':''}" onclick="openExercise('${e.id}')">
-        <div><h3>${esc(e.name)}</h3><div class="mu sm-t">${esc(e.sets_count)} séries</div></div>
+        <div><h3>${esc(e.name)}</h3><div class="mu sm-t">${muscleChip(e)} ${esc(e.sets_count)} séries</div></div>
         <span>${S.done[e.id]?'✅':'›'}</span></button>`).join('')
       : `<div class="card mu" style="text-align:center">Nenhum exercício neste treino.<br><button class="link" onclick="go('settings')">Cadastrar exercícios</button></div>`}
     </div>
@@ -360,7 +360,7 @@ function doCheckout(){
 function openExercise(eid){
   const c = currentCheckin(), e = S.D.exercises.find(x=>x.id===eid), last = lastSets(eid), n = num(e.sets_count);
   let h = `<button class="link" onclick="rWorkoutList()" style="margin-bottom:10px">← Voltar</button>
-    <h2 style="margin-bottom:4px">${esc(e.name)}</h2><div class="mu sm-t">Valores pré-preenchidos com o último treino</div>`;
+    <h2 style="margin-bottom:4px">${exLabel(e)}</h2><div class="mu sm-t">Valores pré-preenchidos com o último treino</div>`;
   for(let i=1;i<=n;i++){
     const l = last.find(s=>num(s.set_number)===i);
     const w = l?num(l.weight):0, r = l?num(l.reps):0, it = l?num(l.intensity):2;
@@ -408,7 +408,7 @@ function rProg(){
 function progWorkout(){
   const wid=$('pw').value, s=$('pe');
   if(!wid){ s.disabled=true; return }
-  s.innerHTML = '<option value="">Selecione o exercício</option>'+exercisesOf(wid).map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join('');
+  s.innerHTML = '<option value="">Selecione o exercício</option>'+exercisesOf(wid).map(e=>`<option value="${e.id}">${esc(e.name)}${e.muscle?' ('+esc(e.muscle)+')':''}</option>`).join('');
   s.disabled=false;
 }
 function progLoad(){
@@ -494,28 +494,53 @@ function manageEx(wid){
     <h2>Treino ${esc(w?w.name:'')}</h2>
     <div class="card stack"><input id="en" list="exlist" autocomplete="off" placeholder="Nome do exercício (digite ou escolha)" oninput="pickEx()">
       <datalist id="exlist">${exerciseCatalog().map(n=>`<option value="${esc(n)}">`).join('')}</datalist>
+      <select id="eg"><option value="">Região do corpo (opcional)</option>${MUSCLES.map(m=>`<option>${m}</option>`).join('')}</select>
       <div class="row"><input id="es" type="number" inputmode="numeric" placeholder="Nº de séries" min="1" max="10"><button class="btn sm" onclick="addEx()">Adicionar</button></div></div>
-    <div class="stack" style="margin-top:14px">${ex.map(e=>`<div class="card row sp"><div><b>${esc(e.name)}</b><div class="mu sm-t">${esc(e.sets_count)} séries</div></div>
+    <div class="stack" style="margin-top:14px">${ex.map(e=>`<div class="card row sp"><div><b>${esc(e.name)}</b> ${muscleChip(e)}<div class="mu sm-t">${esc(e.sets_count)} séries</div></div>
       <button class="ibtn" onclick="delEx('${e.id}')">🗑️</button></div>`).join('')||'<p class="mu">Nenhum exercício ainda.</p>'}</div>`);
 }
-const DEFAULT_EXERCISES = ['Supino reto','Supino inclinado','Supino declinado','Crucifixo','Crossover','Flexão de braço','Puxada frontal','Puxada atrás','Remada curvada','Remada baixa','Remada unilateral','Barra fixa','Pulldown','Desenvolvimento','Elevação lateral','Elevação frontal','Crucifixo inverso','Encolhimento','Rosca direta','Rosca alternada','Rosca martelo','Rosca scott','Tríceps pulley','Tríceps testa','Tríceps corda','Tríceps francês','Mergulho','Agachamento livre','Agachamento hack','Leg press','Cadeira extensora','Mesa flexora','Cadeira flexora','Stiff','Levantamento terra','Avanço','Afundo','Passada','Cadeira abdutora','Cadeira adutora','Panturrilha em pé','Panturrilha sentado','Elevação pélvica','Glúteo na polia','Abdominal','Prancha','Abdominal infra','Esteira','Bicicleta'];
+const MUSCLES = ['Peito','Costas','Ombro','Bíceps','Tríceps','Antebraço','Quadríceps','Posterior de coxa','Glúteo','Panturrilha','Abdômen','Cardio'];
+const DEFAULT_EXERCISES = [
+  ['Supino reto','Peito'],['Supino inclinado','Peito'],['Supino declinado','Peito'],['Crucifixo','Peito'],['Crossover','Peito'],['Flexão de braço','Peito'],
+  ['Puxada frontal','Costas'],['Puxada atrás','Costas'],['Remada curvada','Costas'],['Remada baixa','Costas'],['Remada unilateral','Costas'],['Barra fixa','Costas'],['Pulldown','Costas'],['Levantamento terra','Costas'],
+  ['Desenvolvimento','Ombro'],['Elevação lateral','Ombro'],['Elevação frontal','Ombro'],['Crucifixo inverso','Ombro'],['Encolhimento','Ombro'],
+  ['Rosca direta','Bíceps'],['Rosca alternada','Bíceps'],['Rosca martelo','Bíceps'],['Rosca scott','Bíceps'],
+  ['Tríceps pulley','Tríceps'],['Tríceps testa','Tríceps'],['Tríceps corda','Tríceps'],['Tríceps francês','Tríceps'],['Mergulho','Tríceps'],
+  ['Agachamento livre','Quadríceps'],['Agachamento hack','Quadríceps'],['Leg press','Quadríceps'],['Cadeira extensora','Quadríceps'],['Avanço','Quadríceps'],['Afundo','Quadríceps'],['Passada','Quadríceps'],
+  ['Mesa flexora','Posterior de coxa'],['Cadeira flexora','Posterior de coxa'],['Stiff','Posterior de coxa'],
+  ['Cadeira abdutora','Glúteo'],['Cadeira adutora','Glúteo'],['Elevação pélvica','Glúteo'],['Glúteo na polia','Glúteo'],
+  ['Panturrilha em pé','Panturrilha'],['Panturrilha sentado','Panturrilha'],
+  ['Abdominal','Abdômen'],['Prancha','Abdômen'],['Abdominal infra','Abdômen'],
+  ['Esteira','Cardio'],['Bicicleta','Cardio']
+];
+const muscleChip = e => e && e.muscle ? `<span class="pill">${esc(e.muscle)}</span>` : '';
+const exLabel = e => esc(e.name) + (e.muscle ? ' <span class="pill" style="vertical-align:middle">'+esc(e.muscle)+'</span>' : '');
+function muscleOfName(name){
+  const k = String(name).trim().toLowerCase();
+  const mine = S.D.exercises.find(e=>String(e.name).trim().toLowerCase()===k && e.muscle);
+  if(mine) return mine.muscle;
+  const d = DEFAULT_EXERCISES.find(x=>x[0].toLowerCase()===k);
+  return d ? d[1] : '';
+}
 function exerciseCatalog(){
   const seen = new Map();
-  [...S.D.exercises.map(e=>e.name), ...DEFAULT_EXERCISES].forEach(n => { const k=String(n).trim().toLowerCase(); if(k && !seen.has(k)) seen.set(k, String(n).trim()) });
+  [...S.D.exercises.map(e=>e.name), ...DEFAULT_EXERCISES.map(x=>x[0])].forEach(n => { const k=String(n).trim().toLowerCase(); if(k && !seen.has(k)) seen.set(k, String(n).trim()) });
   return [...seen.values()].sort((a,b)=>a.localeCompare(b,'pt-BR'));
 }
 function pickEx(){
   const k = $('en').value.trim().toLowerCase();
   const known = S.D.exercises.find(e=>String(e.name).trim().toLowerCase()===k);
   if(known && !$('es').value) $('es').value = known.sets_count;
+  const m = muscleOfName($('en').value); if(m) $('eg').value = m;
 }
 function addEx(){
   let name=$('en').value.trim(); const setsCount=parseInt($('es').value);
   if(!name||!setsCount) return toast('Informe nome e séries',true);
   const same = exerciseCatalog().find(n=>n.toLowerCase()===name.toLowerCase()); if(same) name = same;
   const id=uuid(), order_index = Math.max(0,...exercisesOf(S.cw).map(e=>num(e.order_index)))+1;
-  S.D.exercises.push({id, workout_id:S.cw, name, sets_count:setsCount, order_index});
-  op('createExercise',{id, workoutId:S.cw, name, setsCount, order_index}); manageEx(S.cw);
+  const muscle = $('eg').value || muscleOfName(name);
+  S.D.exercises.push({id, workout_id:S.cw, name, muscle, sets_count:setsCount, order_index});
+  op('createExercise',{id, workoutId:S.cw, name, muscle, setsCount, order_index}); manageEx(S.cw);
 }
 function delEx(id){
   if(!confirm('Excluir exercício?')) return;
