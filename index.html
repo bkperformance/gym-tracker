@@ -492,14 +492,27 @@ function manageEx(wid){
   S.cw = wid; const w = S.D.workouts.find(x=>x.id===wid), ex = exercisesOf(wid);
   view(`<button class="link" onclick="rSettings()" style="margin-bottom:10px">← Voltar</button>
     <h2>Treino ${esc(w?w.name:'')}</h2>
-    <div class="card stack"><input id="en" placeholder="Nome do exercício">
+    <div class="card stack"><input id="en" list="exlist" autocomplete="off" placeholder="Nome do exercício (digite ou escolha)" oninput="pickEx()">
+      <datalist id="exlist">${exerciseCatalog().map(n=>`<option value="${esc(n)}">`).join('')}</datalist>
       <div class="row"><input id="es" type="number" inputmode="numeric" placeholder="Nº de séries" min="1" max="10"><button class="btn sm" onclick="addEx()">Adicionar</button></div></div>
     <div class="stack" style="margin-top:14px">${ex.map(e=>`<div class="card row sp"><div><b>${esc(e.name)}</b><div class="mu sm-t">${esc(e.sets_count)} séries</div></div>
       <button class="ibtn" onclick="delEx('${e.id}')">🗑️</button></div>`).join('')||'<p class="mu">Nenhum exercício ainda.</p>'}</div>`);
 }
+const DEFAULT_EXERCISES = ['Supino reto','Supino inclinado','Supino declinado','Crucifixo','Crossover','Flexão de braço','Puxada frontal','Puxada atrás','Remada curvada','Remada baixa','Remada unilateral','Barra fixa','Pulldown','Desenvolvimento','Elevação lateral','Elevação frontal','Crucifixo inverso','Encolhimento','Rosca direta','Rosca alternada','Rosca martelo','Rosca scott','Tríceps pulley','Tríceps testa','Tríceps corda','Tríceps francês','Mergulho','Agachamento livre','Agachamento hack','Leg press','Cadeira extensora','Mesa flexora','Cadeira flexora','Stiff','Levantamento terra','Avanço','Afundo','Passada','Cadeira abdutora','Cadeira adutora','Panturrilha em pé','Panturrilha sentado','Elevação pélvica','Glúteo na polia','Abdominal','Prancha','Abdominal infra','Esteira','Bicicleta'];
+function exerciseCatalog(){
+  const seen = new Map();
+  [...S.D.exercises.map(e=>e.name), ...DEFAULT_EXERCISES].forEach(n => { const k=String(n).trim().toLowerCase(); if(k && !seen.has(k)) seen.set(k, String(n).trim()) });
+  return [...seen.values()].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+}
+function pickEx(){
+  const k = $('en').value.trim().toLowerCase();
+  const known = S.D.exercises.find(e=>String(e.name).trim().toLowerCase()===k);
+  if(known && !$('es').value) $('es').value = known.sets_count;
+}
 function addEx(){
-  const name=$('en').value.trim(), setsCount=parseInt($('es').value);
+  let name=$('en').value.trim(); const setsCount=parseInt($('es').value);
   if(!name||!setsCount) return toast('Informe nome e séries',true);
+  const same = exerciseCatalog().find(n=>n.toLowerCase()===name.toLowerCase()); if(same) name = same;
   const id=uuid(), order_index = Math.max(0,...exercisesOf(S.cw).map(e=>num(e.order_index)))+1;
   S.D.exercises.push({id, workout_id:S.cw, name, sets_count:setsCount, order_index});
   op('createExercise',{id, workoutId:S.cw, name, setsCount, order_index}); manageEx(S.cw);

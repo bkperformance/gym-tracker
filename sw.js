@@ -1,4 +1,4 @@
-const CACHE = 'gymtracker-v1';
+const CACHE = 'gymtracker-v2';
 const SHELL = ['./', 'index.html', 'manifest.json', 'icon.svg', 'chart.umd.min.js'];
 
 self.addEventListener('install', e => {
