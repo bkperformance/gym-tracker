@@ -1,5 +1,5 @@
-const CACHE = 'gymtracker-v2';
-const SHELL = ['./', 'index.html', 'manifest.json', 'icon.svg', 'chart.umd.min.js'];
+const CACHE = 'gymtracker-v3';
+const SHELL = ['./', 'index.html', 'manifest.json', 'icon.svg', 'chart.umd.min.js', 'whobmi.js'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
